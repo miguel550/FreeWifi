@@ -23,7 +23,6 @@ export default class App extends React.Component {
     return (
       <View style={styles.container}>
         <Text style={styles.textstyle}>Tu real hackeadol</Text>
-        <UselessTextInput />
         <WifiList />
         <Text>{this.state.wifi}</Text>
       </View>
@@ -57,9 +56,42 @@ class WifiList extends React.Component {
   }
 }
 class WifiListElement extends React.Component {
+  _connect = async () => {
+    make_pass = (ssid, bssid) => {
+      pass = bssid.toLowerCase().replace(/:/g, '');
+      replacement = ssid.substr(4);
+      pass = pass.substring(0, pass.length - replacement.length) + replacement.toLowerCase();
+      return pass;
+    };
+    data = this.props.data;
+    wifi.findAndConnect(this.props.data.SSID, make_pass(data.SSID, data.BSSID), (found) => {
+      if (found) {
+        ToastAndroid.show("wifi is in range", ToastAndroid.SHORT);
+      }else{
+        ToastAndroid.show("wifi is not in range", ToastAndroid.SHORT);
+      }
+    });
+  };
+  _supported = () => {
+    return this.props.data.SSID.toLowerCase().startsWith("orange");
+  };
+  _onPress = async () => {
+    wifi.connectionStatus((isConnected) => {
+      if(this._supported()){
+        if (isConnected) {
+            wifi.disconnect();
+            this._connect();
+          }else{
+            this._connect();
+        }
+      }else{
+        ToastAndroid.show("Not supported.", ToastAndroid.SHORT);
+      }
+    });
+  };
   render(){
     return (
-      <Text>{this.props.data.BSSID}</Text>
+      <Text onPress={this._onPress}>{this.props.data.SSID}</Text>
     );
   }
 }
